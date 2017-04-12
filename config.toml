@@ -1,0 +1,12 @@
+baseURL = "https://sdboyer.io"
+languageCode = "en-us"
+title = "sdboyer.io"
+
+[params]
+    highlight = "github"
+    topmenu = "none"
+
+[author]
+    name = "sam boyer"
+    github = "sdboyer"
+    twitter = "sdboyer"
