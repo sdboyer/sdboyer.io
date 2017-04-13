@@ -1,4 +1,4 @@
-baseURL = "https://sdboyer.io"
+baseURL = "https://sdboyer.io/"
 languageCode = "en-us"
 title = "sdboyer.io"
 theme = "slim"
