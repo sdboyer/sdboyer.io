@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title> Week of April 10 &middot; sdboyer.io </title>
+
+
+<link rel="stylesheet" href="https://sdboyer.iocss/slim.css">
+<link rel="stylesheet" href="https://sdboyer.iocss/dep-status-slim.css">
+<link rel="stylesheet" href="https://sdboyer.iocss/highlight.min.css">
+<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Source+Code+Pro' rel='stylesheet' type='text/css'>
+
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+<link rel="shortcut icon" href="/favicon.ico">
+
+
+<link href="" rel="alternate" type="application/rss+xml" title="sdboyer.io" />
+
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+  <h1 class="site-title"><a href="https://sdboyer.io">sdboyer.io</a></h1>
+  <p class="site-tagline"></p>
+  <div class="nav">
+    <a class="nav-btn" href="#">
+      <span class="ci ci-burger"></span>
+    </a>
+    <ul class="nav-list">
+       
+	  <li class="spacer">&ac;</li>
+
+      <li><a href="https://github.com/sdboyer">Github</a></li> 
+      <li><a href="https://twitter.com/sdboyer">Twitter</a></li> 
+    </ul>
+  </div>
+</div>
+    <div class="content">
+      <div class="post">
+          <h2 class="post-title"><a href="https://sdboyer.io/dep-status/2017-04-10/">
+            <code class="dep-status-title">dep status</code>
+            <time class="dep-status-title">(2017-04-11)</time>
+          </a></h2>
+        <div class="post-content">
+          
+
+<p><code>dep</code>, the prototype for an <a href="https://github.com/golang/dep">official Go dependency management tool</a>, has been progressing wonderfully since opening up in January. We&rsquo;ve had dozens of community members step up with ideas and code, as well as untold numbers more testing out the tool on real workloads - the momentum has been awesome!</p>
+
+<p><code>dep</code> is in an experimental phase - development has been rapid, and we&rsquo;ve pivoted in some key ways. And while we&rsquo;re learning a lot, it&rsquo;s also been hard for a casual observer to follow. To mitigate that, starting this week, I&rsquo;m going to (try to) publish a once-weekly update of what all&rsquo;s going on with <code>dep</code>.</p>
+
+<p>I&rsquo;ll keep it as short as possible, focusing each post in three areas:</p>
+
+<ul>
+<li>General news - state of the roadmap, big changes that are incoming, etc.</li>
+<li>What needs community attention over this coming week (max 3 items)</li>
+<li>What we&rsquo;ve finished this past week</li>
+</ul>
+
+<p>Off we go!</p>
+
+<h2 id="news-and-such">News and Such</h2>
+
+<p>While it&rsquo;s important for us to maintain an experimental mindset with <code>dep</code>, we also want it to at least be stable enough that users can feel safe to commit their manifest and lock files. This is [the first item]() on our [roadmap](), and we&rsquo;re going to try to get it done by mid-May.</p>
+
+<p>To that end, there&rsquo;s some big news - I&rsquo;ve just merged a <a href="https://github.com/golang/dep/pull/342">PR</a> moving from JSON to TOML for the manifest (<code>manifest.json</code> -&gt; <code>Gopkg.toml</code>) and lock (<code>lock.json</code> -&gt; <code>Gopkg.lock</code>) files. This is, of course, a major step towards stabilizing the files.</p>
+
+<p>Also, gps is going to be <a href="https://github.com/golang/dep/issues/300">moving directly into <code>dep</code> as a subpackage</a>. This will make contributing easier, centralize issues into one repository, and shorten <code>dep</code>&rsquo;s overall development cycle.</p>
+
+<h2 id="community-attention-needed">Community Attention Needed!</h2>
+
+<ul>
+<li>As our current focus is on stabilizing the metadata files,</li>
+<li>Help with reviewing <a href="https://github.com/golang/dep/pulls">PRs</a> for general issues, coding style, testing completeness, etc., is VERY helpful. Finding time to do good reviews is currently a <em>huge</em> progress blocker, and if the maintainers can focus our review time only on correctness with respect to the spec, it would be tremendously helpful.</li>
+<li>Docs! Docs docs docsdocsddocodcsdscosdoocso <strong>DOCS</strong>. Ideally, folks who are willing to not just write particular docs, but also do some thinking about how to organize docs sanely.</li>
+</ul>
+
+<h2 id="stuff-we-ve-ed">Stuff We&rsquo;ve 🚢ed</h2>
+
+<p>There&rsquo;s a lot to put in here, as a number of PRs have landed that have been open for several weeks.</p>
+
+<ul>
+<li>We&rsquo;ve added a <code>dep prune</code> subcommand, which will trim out unneeded packages and files from your <code>vendor/</code> directory. There&rsquo;s a better-than-even chance that this command won&rsquo;t actually stay in <code>dep</code>, because [reasons](), but it exists now</li>
+<li>We started splitting gps up into <a href="https://github.com/sdboyer/gps/pull/189">multiple packages</a>.</li>
+<li>I finally finished <a href="https://github.com/sdboyer/gps/pull/196">a large refactor of gps</a>, eliminating some race conditions that were responsible for a number of bugs in dep. (These upstream changes aren&rsquo;t merged into <code>dep</code> just yet, though).</li>
+<li>We&rsquo;ve implemented support for <a href="https://github.com/golang/dep/pull/247">symlinking project roots</a>. This is <em>very</em> basic, and only for the project root, but it should help with some common ways people set up their environments.</li>
+</ul>
+
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+
+</div>
+
+  </div>
+  <script src="https://sdboyer.iojs/slim.js"></script>
+  
+
+</body>
+
+</html>

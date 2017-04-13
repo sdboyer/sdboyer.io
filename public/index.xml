@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>sdboyer.io</title>
+    <link>https://sdboyer.io/</link>
+    <description>Recent content on sdboyer.io</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 11 Apr 2017 20:22:29 -0400</lastBuildDate>
+    
+	<atom:link href="https://sdboyer.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Week of April 10</title>
+      <link>https://sdboyer.io/dep-status/2017-04-10/</link>
+      <pubDate>Tue, 11 Apr 2017 20:22:29 -0400</pubDate>
+      
+      <guid>https://sdboyer.io/dep-status/2017-04-10/</guid>
+      <description>dep, the prototype for an official Go dependency management tool, has been progressing wonderfully since opening up in January. We&amp;rsquo;ve had dozens of community members step up with ideas and code, as well as untold numbers more testing out the tool on real workloads - the momentum has been awesome!
+dep is in an experimental phase - development has been rapid, and we&amp;rsquo;ve pivoted in some key ways. And while we&amp;rsquo;re learning a lot, it&amp;rsquo;s also been hard for a casual observer to follow.</description>
+    </item>
+    
+  </channel>
+</rss>
