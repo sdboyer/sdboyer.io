@@ -1,3 +1,6 @@
 [submodule "themes/nofancy"]
 	path = themes/nofancy
 	url = https://github.com/gizak/nofancy
+[submodule "themes/slim"]
+	path = themes/slim
+	url = https://github.com/zhe/hugo-theme-slim

@@ -1,12 +1,14 @@
 baseURL = "https://sdboyer.io"
 languageCode = "en-us"
 title = "sdboyer.io"
+theme = "slim"
 
 [params]
     highlight = "github"
     topmenu = "none"
+    GithubID = "sdboyer"
+    TwitterID = "sdboyer"
+    FooterMsg = "ohai"
 
 [author]
     name = "sam boyer"
-    github = "sdboyer"
-    twitter = "sdboyer"
