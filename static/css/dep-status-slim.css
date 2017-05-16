@@ -8,3 +8,11 @@ time.dep-status-title {
     color: #777;
     font-size: 1rem;
 }
+
+/* Prevent the text from hitting the edge of the screen on mobile */
+@media screen and (max-width: 43em) {
+    .container {
+        margin-left: 1em;
+        margin-right: 1em;
+    }
+}
