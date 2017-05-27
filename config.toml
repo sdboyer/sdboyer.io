@@ -2,6 +2,7 @@ baseURL = "https://sdboyer.io/"
 languageCode = "en-us"
 title = "sdboyer.io"
 theme = "slim"
+googleAnalytics = "UA-100002759-1"
 
 [params]
     highlight = "github"
