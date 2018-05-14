@@ -202,7 +202,7 @@ But general principles are not necessarily applicable in every situation. Both �
 
 If we think of dependency management as a problem spread across multiple people, then it’s natural to wonder, “might this be a form of a distributed systems problem?” i believe it is, and that it’s useful to adapt the [Fallacies of Distributed Computing](https://en.wikipedia.org/wiki/Fallacies_of_distributed_computing) to dependency management in order to relate some of the harmful oversimplifications in MVS to a problem space that folks are already familiar with.
 
->  The network is reliable -> **Human communication is reliable**
+>  The network is reliable → **Human communication is reliable**
 
 MVS hardcodes the assumption of backwards compatibility. As i'll detail in a later post, compatibility is an empty idea unless the author describes the intended behavior of their code - that is, some kind of specification.
 
@@ -246,7 +246,9 @@ But there's an unexamined premise here: _why_ are the negative outcomes inevitab
 
 Now, i understand the value of cutting out unnecessary degrees of freedom. i get why defensive coding is important. And i've seen people wedge themselves into some truly absurd spots with software i've written. But it's still lazy thinking to simply assume that users will necessarily fill up every nook and cranny of what a tool allows. We have to temper that tendency by thinking about _why_ a user might take actions with these kinds of negative consequences. In almost every case like this i've seen, it's because the user is trying to further one of their own goals, but that has unintended consequences for others.
 
-Turns out, there's a standard term in economics for this kind of effect: [externalities](https://en.wikipedia.org/wiki/Externality). It refers to the costs or benefits experienced by people who did not choose to incur them. There are two basic approaches we can take to address externalities:
+There's a standard term in economics for this: [externalities](https://en.wikipedia.org/wiki/Externality). It refers to the costs or benefits experienced by people who did not choose to incur them. 
+
+There are two basic approaches we can take to address externalities:
 
 - Construct the system so that the person taking an action with potentially negative externalities (like declaring an incompatibility) has to pay some cost. This is known as "internalizing the cost."
 - Isolate actions that the user takes for personal purposes from actions with potentially negative externalities. (Economists work on natural systems and don't usually have the luxury of constraining choice; we at least theoretically do, to the extent that the set of possible choices a user can make are determined by tool design.)
