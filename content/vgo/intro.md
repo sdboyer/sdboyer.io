@@ -3,31 +3,31 @@ title = "An Analysis of vgo"
 keywords = ["golang", "go", "clapback", "dep", "dependency management", "package management"]
 +++
 
-When Russ started releasing his [series of blog posts introducing vgo](https://research.swtch.com/vgo) in late February, i also [put together some words](https://sdboyer.io/blog/vgo-and-dep). In that post, i indicated that i would be working on an assessment of vgo that i would make public as soon as i could. This, finally, is that assessment, although over the past couple months it has transformed into something more.
+When Russ started releasing his [series of blog posts introducing vgo](https://research.swtch.com/vgo) in late February, I also [put together some words](https://sdboyer.io/blog/vgo-and-dep). In that post, I indicated that I would be working on an assessment of vgo that I would make public as soon as I could. This, finally, is that assessment, although over the past couple months it has transformed into something more.
 
-Over the course of reviewing vgo, i have vacillated between “this is clearly infeasible” and “this is how all software should be built" - a reflection of the sheer number of interwoven considerations in this problem space. Now, having largely finished my assessment, i think that both of these ostensibly contradictory positions are basically accurate. 
+Over the course of reviewing vgo, I have vacillated between “this is clearly infeasible” and “this is how all software should be built" - a reflection of the sheer number of interwoven considerations in this problem space. Now, having largely finished my assessment, I think that both of these ostensibly contradictory positions are basically accurate. 
 
 While vgo makes a powerful normative statement about the happy path for software development, it also ignores a number of crucial system properties, particularly those having to do with creating a workable, humane system for the people authoring code within it. These deficiencies lead me to believe that vgo - specifically, the minimal version selection (MVS) set of algorithms - is not fit for purpose, and we should pursue a different model.
 
 Making this case is not a simple matter. It's easy to debate the appropriate scope for a tool like this. What the tool does is intrinsically bound up with difficult or unknowable questions about what is reasonable to expect developers to do. And we have to dive deep into algorithmic properties in order to extract inferences about the social conditions that will result from them.
 
-To cover all that, i've broken this up into a six-post series. This post outlines my concerns and plans in broad strokes, while subsequent posts look in greater detail at specific topics. This is not my day job, though, so i won't be publishing these rapid-fire, one day after another. i will release them as i finish them; as i write this, two more are nearly done.
+To cover all that, I've broken this up into a six-post series. This post outlines my concerns and plans in broad strokes, while subsequent posts look in greater detail at specific topics. This is not my day job, though, so I won't be publishing these rapid-fire, one day after another. I will release them as I finish them; as I write this, two more are nearly done.
 
-Throughout the series, i'll be referring to three core algorithms, and to their corresponding tools:
+Throughout the series, I'll be referring to three core algorithms, and to their corresponding tools:
 
 - **MVS**, the engine behind vgo, as it is proposed across the blog posts and formal proposal.
 - **[gps](https://github.com/golang/dep/tree/master/gps)**, the engine behind dep, which uses a SAT-based approach.
 - **gps2** (not the final name!), a hypothetical SAT-based approach, replacing the Go toolchain like vgo, but driven by an improved version of dep's core algorithm that corrects shortcomings in both MVS and gps.
 
-Let's be clear: i would vastly rather be in a situation where i could reveal gps2 alongside these blog posts, as Russ did with vgo. i find the prospect of writing about hypothetical software nauseating. But time is short, vgo is on the march, and it's impossible to make this evaluation of MVS constructive and useful without a coherent alternative against which to compare. gps/dep can serve as a basis for comparison at times, but the simple fact that they were designed within the constraints that a third-party tool necessarily had to operate within often makes them a poor comparison.
+Let's be clear: I would vastly rather be in a situation where I could reveal gps2 alongside these blog posts, as Russ did with vgo. I find the prospect of writing about hypothetical software nauseating. But time is short, vgo is on the march, and it's impossible to make this evaluation of MVS constructive and useful without a coherent alternative against which to compare. gps/dep can serve as a basis for comparison at times, but the simple fact that they were designed within the constraints that a third-party tool necessarily had to operate within often makes them a poor comparison.
 
-That leaves me no other choice than to write these posts with references to an as-yet-unwritten algorithm. On the plus side, i've written such an algorithm before, and gps2 wouldn't be a huge departure from dep or vgo - more of a happy union. The final post in this series will describe gps2, and a toolchain built around it. 
+That leaves me no other choice than to write these posts with references to an as-yet-unwritten algorithm. On the plus side, I've written such an algorithm before, and gps2 wouldn't be a huge departure from dep or vgo - more of a happy union. The final post in this series will describe gps2, and a toolchain built around it. 
 
 With that context out of the way, though, the right place to get this started is with the good parts of vgo.
 
 ## What Works in vgo
 
-There's a lot about vgo that's great. Outside of the core algorithm, Russ and i agree on almost everything. Some of what vgo proposes to introduce are things that the Go community has been craving for years, and it's wonderful to see them finally happening. So, with the remainder of this series being so critical of MVS, it makes it all the more important that we start with what works. i don't want to give the erroneous impression that some of vgo's other, non-MVS properties are also on my chopping block; i suspect that those are the ones that Go folks might be primarily excited about.
+There's a lot about vgo that's great. Outside of the core algorithm, Russ and I agree on almost everything. Some of what vgo proposes to introduce are things that the Go community has been craving for years, and it's wonderful to see them finally happening. So, with the remainder of this series being so critical of MVS, it makes it all the more important that we start with what works. I don't want to give the erroneous impression that some of vgo's other, non-MVS properties are also on my chopping block; I suspect that those are the ones that Go folks might be primarily excited about.
 
 Many of these are also improvements that we had contemplated with dep. But, because [the package management committee](https://docs.google.com/document/d/18tNd8r5DV0yluCR7tPvkMTsWD_lYcRO7NhpNSDymRr8/edit) chose to intentionally limit dep's scope in order to minimize duplication with, and ease later integration into, the Go toolchain, we never pursued them. Not only would a gps2-based toolchain preserve these, but the utility of some would be increased when paired with a more domain-appropriate algorithm.
 
@@ -51,9 +51,9 @@ Fortunately, vgo fully embraces the idea of self-identifying code, which not onl
 
 Getting rid of GOPATH has been a holy grail for almost as long as there has been a GOPATH. Finally, here it is! No longer will Go code be awkwardly sequestered away from the rest of our code, and weaving Go code into larger monorepos will become trivial overnight. Of course, code that was previously on GOPATH has to go somewhere, and that space needs to store versioned code. Enter, `$GOPATH/src/v/`.
 
-The only necessary condition for this is the compiler be able to receive an explicit list of module versions for a given build. It doesn't matter whether that list is produced by MVS, some other algorithm, or read from a file. In fact, i [sketched out a proto-proposal](https://gist.github.com/sdboyer/def9b138af448f39300cb078b0e94cc3) in early 2017 that was dep-centric, but with the same goals. The first half of that proposal is very nearly the same as what vgo now does; the similarities are such that we could replace MVS with a more appropriate algorithm, and get all of this very nearly for free.
+The only necessary condition for this is the compiler be able to receive an explicit list of module versions for a given build. It doesn't matter whether that list is produced by MVS, some other algorithm, or read from a file. In fact, I [sketched out a proto-proposal](https://gist.github.com/sdboyer/def9b138af448f39300cb078b0e94cc3) in early 2017 that was dep-centric, but with the same goals. The first half of that proposal is very nearly the same as what vgo now does; the similarities are such that we could replace MVS with a more appropriate algorithm, and get all of this very nearly for free.
 
-i have only one qualm with vgo's current design of `$GOPATH/src/v`. By placing human-readable versions directly in the path structure, it means the filesystem tree is not strictly immutable, as a `git push --force` to a tag can require a restructuring of the paths therein. As a result, it's technically unsafe to simultaneously run multiple `vgo get` operations against the same `$GOPATH/src/v`. 
+I have only one qualm with vgo's current design of `$GOPATH/src/v`. By placing human-readable versions directly in the path structure, it means the filesystem tree is not strictly immutable, as a `git push --force` to a tag can require a restructuring of the paths therein. As a result, it's technically unsafe to simultaneously run multiple `vgo get` operations against the same `$GOPATH/src/v`. 
 
 `go.modverify` can make that safe, but has other problems that we'll explore in a later post. Fortunately, well-executed registries can also probably obviate the issues, and more completely than `go.modverify`.
 
@@ -86,9 +86,9 @@ vgo's concept of ["high-fidelity builds"](https://research.swtch.com/vgo-mvs) is
 
 There's been a fair bit of speculation about whether this would induce people to update not enough, or perhaps too much; Russ indicates on the vgo blogs that he believes it will be the Goldilocks amount - "just the right speed." The confusion here is indicative of something significant, for reasons we'll get into in the failures post. But of all the strategies one could use for version selection, something like this is certainly the single most likely one to produce a working build.
 
-In fact, i like this class of strategy so much that [i wrote about it two years ago](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527/#b99d), and designed gps with this capability under the moniker "preferred versions" Today, we could turn preferred versions on in dep more or less like flipping a switch. We haven't yet because i didn't think it was reliable enough yet, and we hadn't worked out a clear CLI interface. (More context in [this issue](https://github.com/golang/dep/issues/622#issuecomment-303259017).)
+In fact, I like this class of strategy so much that [i wrote about it two years ago](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527/#b99d), and designed gps with this capability under the moniker "preferred versions" Today, we could turn preferred versions on in dep more or less like flipping a switch. We haven't yet because I didn't think it was reliable enough yet, and we hadn't worked out a clear CLI interface. (More context in [this issue](https://github.com/golang/dep/issues/622#issuecomment-303259017).)
 
-However, vgo has given me some ideas about how to reduce the scope of what preferred versions do without hampering their effectiveness. i'm now reasonably confident that i have a way of dealing with the problems with preferred versions in general. i'm certain, however, that if we restrict it to _just_ newly-added dependencies - the example above, and Russ' [trophy example](https://research.swtch.com/cargo-newest.html) - it would be straightforward, have zero reliability issues, and might actually solve 95% of the problem in practice. i'm working on a PR, in between writing these posts.
+However, vgo has given me some ideas about how to reduce the scope of what preferred versions do without hampering their effectiveness. I'm now reasonably confident that I have a way of dealing with the problems with preferred versions in general. I'm certain, however, that if we restrict it to _just_ newly-added dependencies - the example above, and Russ' [trophy example](https://research.swtch.com/cargo-newest.html) - it would be straightforward, have zero reliability issues, and might actually solve 95% of the problem in practice. I'm working on a PR, in between writing these posts.
 
 If you've read any of the vgo materials, it might be surprising that dep has something like this at all. Everywhere that the high-fidelity property is discussed, Russ contrasts it against dep/cargo/pub etc. in a manner that makes it easy to erroneously infer that those systems could never have a high fidelity property - despite my explicit request that at least some reference to preferred versions be made. Perhaps Russ chose to omit it because dep's preferred versions implementation isn't live. In any case, it's unhelpful to the discussion for folks to be under the erroneous impression that losing MVS necessarily entails losing the high-fidelity property.
 
@@ -98,21 +98,21 @@ Pseudoversions are a way of defining a [total order](https://en.wikipedia.org/wi
 
 Simply imposing an ordering is not mechanically difficult - gps has [functions](https://godoc.org/github.com/golang/dep/gps#SortForUpgrade) that [do exactly that](https://github.com/golang/dep/blob/4c74ecd27d7c268e1e9ce6a043c10cf7c46db40f/gps/version.go#L800). But gps' approach is an arbitrary way of relating the [different version types](https://golang.github.io/dep/docs/Gopkg.toml.html#version-rules) in its model, chosen primarily as a way of servicing a desired outcome in the solver; there is nothing intrinsically meaningful about ["semver before branches"](https://github.com/golang/dep/blob/4c74ecd27d7c268e1e9ce6a043c10cf7c46db40f/gps/version.go#L664).
 
-Pseudoversions also discard certain classes of information in an interesting and useful way. i have seen people create all manner of convoluted histories in git repositories, then turn to their build systems to somehow work well on top of these flows. This has irked me for years, but without a clear rule that i could use to sort these workflows into "saner" and "less sane," it was difficult to imagine how i might eliminate them. The way vgo uses pseudoversions strikes me as a good candidate for such a rule:
+Pseudoversions also discard certain classes of information in an interesting and useful way. I have seen people create all manner of convoluted histories in git repositories, then turn to their build systems to somehow work well on top of these flows. This has irked me for years, but without a clear rule that I could use to sort these workflows into "saner" and "less sane," it was difficult to imagine how I might eliminate them. The way vgo uses pseudoversions strikes me as a good candidate for such a rule:
 
 - Any revision in a git (or whatever) repository can be referenced, but
 - Automated updates will only really help with chasing the tip of a branch
 
-These two, respectively, cover the two cases i see most often, and therefore strike me as "saner":
+These two, respectively, cover the two cases I see most often, and therefore strike me as "saner":
 
 - When sending a PR with a fix to some upstream repository, you want to point to the latest commit in the PR while you wait for it to be accepted
 - Companies that have just one mainline of development, and everything just chases tip
 
-Pseudoversions aren't an unqualified win, though. Clustering them all on `v0.0.0` leads to MVS making some absurd choices under certain circumstances, like when mixing branch-chasing with tagged releases. This would be particularly acute during the period of migration to an MVS-based toolchain, as projects that have been tagging for years and have entered the `v2.x.x` range and above will only be able to access those tags as pseudoversions. This is another one of those problems that i believe that gps2 would address.
+Pseudoversions aren't an unqualified win, though. Clustering them all on `v0.0.0` leads to MVS making some absurd choices under certain circumstances, like when mixing branch-chasing with tagged releases. This would be particularly acute during the period of migration to an MVS-based toolchain, as projects that have been tagging for years and have entered the `v2.x.x` range and above will only be able to access those tags as pseudoversions. This is another one of those problems that I believe that gps2 would address.
 
 ### Semantic Import Versioning (mostly)
 
-The basic premise of [semantic import versioning (SIV)](https://research.swtch.com/vgo-import) rings true: a change in behavior should be accompanied by a change in name. That Go has such a (relatively) easy way of renaming - versioned import paths - is a happy coincidence. It's even better because versioning an import path doesn't require any compiler magic, as it's effectively just renaming a tree of packages. Its utility extends beyond Go, though, as evidenced by the fact that it's at least partially inspired by ideas from Clojure. Personally, i'd go so far as to say that language designers should consider "easy package renaming" to be an important property for new languages.
+The basic premise of [semantic import versioning (SIV)](https://research.swtch.com/vgo-import) rings true: a change in behavior should be accompanied by a change in name. That Go has such a (relatively) easy way of renaming - versioned import paths - is a happy coincidence. It's even better because versioning an import path doesn't require any compiler magic, as it's effectively just renaming a tree of packages. Its utility extends beyond Go, though, as evidenced by the fact that it's at least partially inspired by ideas from Clojure. Personally, I'd go so far as to say that language designers should consider "easy package renaming" to be an important property for new languages.
 
 SIV is really just about defining a correspondence between the name used for a given module, and the set of versions that can apply to that module. All of that precedes what algorithms (MVS/gps, etc.) might be exploring those sets of versions - meaning that SIV is not dependent on, or associated with, any particular algorithm. It could certainly be helpful in dep, and would likely be a cornerstone of . MVS, though, absolutely cannot exist without SIV, as it cannot make sound decisions without the compatibility invariants SIV is supposed to provide.
 
@@ -146,7 +146,7 @@ Now, my central disagreement with Russ is over whether it should be possible for
 
 ## MVS: A Category Error
 
-The above features are mostly excellent, and i'm sure Go developers are excited to get at them. Unfortunately, those features are all wrapped around MVS, which is an algorithm for solving a math problem, not a community problem.
+The above features are mostly excellent, and I'm sure Go developers are excited to get at them. Unfortunately, those features are all wrapped around MVS, which is an algorithm for solving a math problem, not a community problem.
 
 But let's start at the basics. If there are two algorithms that satisfy the same requirements, and only one is NP-complete, you pick the other one. That's axiomatic. Moreover, if you have only an NP-complete algorithm for a particular problem, finding a less complex alternative that does the same job is an electrifying discovery. When such an alternative algorithm is proposed, however, the inevitable question to be answered is whether it _actually does_ meet the original requirements.
 
@@ -154,9 +154,9 @@ One way of thinking about this is through the framework of incidental vs. essent
 
 Reading the vgo materials suggests that Russ believes the SAT-entailing aspects of current language dependency managers fall into the "incidental complexity" category. That is, they're problems we've essentially created for ourselves, and if we'd just trim the fat - a la MVS - then everyone would be unequivocally better off.
 
-But, in avoiding SAT, MVS also cuts out some of the complexities that i believe are essential to the domain. Being essential, the problems don't go away when MVS ignores them. Instead, they're redistributed into other, often less obvious places. If reading the vgo blog posts gave you a general sense of unease that you couldn't put your finger on, that might've been you intuitively sensing some of these redistributions.
+But, in avoiding SAT, MVS also cuts out some of the complexities that I believe are essential to the domain. Being essential, the problems don't go away when MVS ignores them. Instead, they're redistributed into other, often less obvious places. If reading the vgo blog posts gave you a general sense of unease that you couldn't put your finger on, that might've been you intuitively sensing some of these redistributions.
 
-Now, having pushed out MVS's rules to their logical conclusions, i've seen where much of the displaced complexity lands - and i believe that the cure is worse than the disease. That is, MVS will cause more harm than arises from the NP-complete problems Russ designed it to circumvent.
+Now, having pushed out MVS's rules to their logical conclusions, I've seen where much of the displaced complexity lands - and I believe that the cure is worse than the disease. That is, MVS will cause more harm than arises from the NP-complete problems Russ designed it to circumvent.
 
 There are eight essential issues that lead me to this conclusion. We'll explore each of them, and more, over the course of this series:
 
@@ -173,38 +173,38 @@ There are eight essential issues that lead me to this conclusion. We'll explore 
 
 There are other problems, but these are the foundational issues that cannot be fixed under MVS. Certainly, this is worlds away from "mostly don't pay attention to versioning," as [the first vgo blog post suggested](https://research.swtch.com/vgo-intro).
 
-Still, some of these are pretty low-level concerns, and even if they don't sound particularly great, i don't imagine it's immediately obvious how they lead to a conclusion that a wholesale rejection of MVS is necessary. To help establish that context, and frame the detailed discussions in this series' later posts, let's step back from the trees for a look at the forest.
+Still, some of these are pretty low-level concerns, and even if they don't sound particularly great, I don't imagine it's immediately obvious how they lead to a conclusion that a wholesale rejection of MVS is necessary. To help establish that context, and frame the detailed discussions in this series' later posts, let's step back from the trees for a look at the forest.
 
 ### The Forest of Risk
 
 i've indicated that MVS is not fit for purpose, but have not been explicit about what, exactly, the purpose _is_ for tools in this domain. It's a tricky question, as there are a lot of overlapping, often competing goals that aren't readily separable. 
 
-i spent a fair bit of time defining the goal in my package management essay from 2016. Early on, i gave a more mechanically-oriented description by [breaking the purpose down into steps](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#8124):
+I spent a fair bit of time defining the goal in my package management essay from 2016. Early on, I gave a more mechanically-oriented description by [breaking the purpose down into steps](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#8124):
 
 > 1. divine, from the myriad possible shapes of and disorder around real software in development, the set of immediate dependencies the developer **intends** to rely on, then
 > 2. transform that intention into a precise, recursively-explored list of source code dependencies, such that anyone — the developer, a different developer, a build system, a user — can
 > 3. create/**reproduce** the dependency source tree from that list, thereby
 > 4. creating an isolated, self-contained artifact of project + dependencies that can be input to a compiler/interpreter.
 
-One could quibble a bit about whether MVS meets some of these, but i'd say it essentially passes this bar. So the problems with MVS aren't evident at the level of basic automation and structure. You have to dig further, until you reach the more foundational idea of [risk management](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#4e66):
+One could quibble a bit about whether MVS meets some of these, but I'd say it essentially passes this bar. So the problems with MVS aren't evident at the level of basic automation and structure. You have to dig further, until you reach the more foundational idea of [risk management](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#4e66):
 
 > The themes here are time, risk, and uncertainty. When developing software, there are unknowns in every direction; time constraints dictate that you can’t explore everything, and exploring the *wrong* thing can hurt, or even sink, your project. Some uncertainties may be heightened or lessened on some projects, but we *cannot* make them disappear. Ever. They are natural constraints.
 
-The deeper purpose of tools in this domain is to mitigate the various risks of relying on other peoples' code. MVS focuses exclusively on eliminating one class of risk within that set - pathological SAT solving arising from arbitrary constraints - because, as far as i can tell, it's the one risk that's well-defined enough to be in a known complexity class. But it does so by increasing other risks, sometimes drastically - and without a critical examination of what factors lead to unmanageable SAT issues manifesting in practice.
+The deeper purpose of tools in this domain is to mitigate the various risks of relying on other peoples' code. MVS focuses exclusively on eliminating one class of risk within that set - pathological SAT solving arising from arbitrary constraints - because, as far as I can tell, it's the one risk that's well-defined enough to be in a known complexity class. But it does so by increasing other risks, sometimes drastically - and without a critical examination of what factors lead to unmanageable SAT issues manifesting in practice.
 
 To illustrate what's being missed, let's look at "risk management as a design goal for dependency management" through two different lenses: distributed systems and economics.
 
 #### Dependency Management as a Distributed System
 
-The asceticism of vgo's design will be familiar to any moderately experienced Go developer. MVS combines strategically-applied brittleness (e.g., the compiler barfs on unused imports), with leaving complex problems to humans (e.g., generics). When i see people reacting to the vgo proposal by saying that it “feels very Go-ish,” i think it's these underlying patterns they’re recognizing.
+The asceticism of vgo's design will be familiar to any moderately experienced Go developer. MVS combines strategically-applied brittleness (e.g., the compiler barfs on unused imports), with leaving complex problems to humans (e.g., generics). When I see people reacting to the vgo proposal by saying that it “feels very Go-ish,” I think it's these underlying patterns they’re recognizing.
 
 But general principles are not necessarily applicable in every situation. Both “brittleness is instructive” and “complexity is for humans” need very tight feedback loops to work well, which largely limits their applicability to problems that are solved within a single mind. When those feedback loops are stretched out over time and multiple people, they become drastically less effective. Dependency management is spread across both.
 
-If we think of dependency management as a problem spread across multiple people, then it’s natural to wonder, “might this be a form of a distributed systems problem?” i believe it is, and that it’s useful to adapt the [Fallacies of Distributed Computing](https://en.wikipedia.org/wiki/Fallacies_of_distributed_computing) to dependency management in order to relate some of the harmful oversimplifications in MVS to a problem space that folks are already familiar with.
+If we think of dependency management as a problem spread across multiple people, then it’s natural to wonder, “might this be a form of a distributed systems problem?” I believe it is, and that it’s useful to adapt the [Fallacies of Distributed Computing](https://en.wikipedia.org/wiki/Fallacies_of_distributed_computing) to dependency management in order to relate some of the harmful oversimplifications in MVS to a problem space that folks are already familiar with.
 
 >  The network is reliable → **Human communication is reliable**
 
-MVS hardcodes the assumption of backwards compatibility. As i'll detail in a later post, compatibility is an empty idea unless the author describes the intended behavior of their code - that is, some kind of specification.
+MVS hardcodes the assumption of backwards compatibility. As I'll detail in a later post, compatibility is an empty idea unless the author describes the intended behavior of their code - that is, some kind of specification.
 
 In Go, "specification" really just means godoc comments, and to some extent, corresponding tests. Trying to glean useful information from these can be a crapshoot; even well-written documentation often leaves important information out. Moreover, such specifications generally only deal with current behavior - not possible future changes.
 
@@ -244,7 +244,7 @@ There's an unspoken premise behind these choices of examples: if the toolchain p
 
 But there's an unexamined premise here: _why_ are the negative outcomes inevitable?
 
-Now, i understand the value of cutting out unnecessary degrees of freedom. i get why defensive coding is important. And i've seen people wedge themselves into some truly absurd spots with software i've written. But it's still lazy thinking to simply assume that users will necessarily fill up every nook and cranny of what a tool allows. We have to temper that tendency by thinking about _why_ a user might take actions with these kinds of negative consequences. In almost every case like this i've seen, it's because the user is trying to further one of their own goals, but that has unintended consequences for others.
+Now, I understand the value of cutting out unnecessary degrees of freedom. I get why defensive coding is important. And I've seen people wedge themselves into some truly absurd spots with software I've written. But it's still lazy thinking to simply assume that users will necessarily fill up every nook and cranny of what a tool allows. We have to temper that tendency by thinking about _why_ a user might take actions with these kinds of negative consequences. In almost every case like this I've seen, it's because the user is trying to further one of their own goals, but that has unintended consequences for others.
 
 There's a standard term in economics for this: [externalities](https://en.wikipedia.org/wiki/Externality). It refers to the costs or benefits experienced by people who did not choose to incur them. 
 
