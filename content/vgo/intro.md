@@ -246,7 +246,7 @@ But there's an unexamined premise here: _why_ are the negative outcomes inevitab
 
 Now, I understand the value of cutting out unnecessary degrees of freedom. I get why defensive coding is important. And I've seen people wedge themselves into some truly absurd spots with software I've written. But it's still lazy thinking to simply assume that users will necessarily fill up every nook and cranny of what a tool allows. We have to temper that tendency by thinking about _why_ a user might take actions with these kinds of negative consequences. In almost every case like this I've seen, it's because the user is trying to further one of their own goals, but that has unintended consequences for others.
 
-There's a standard term in economics for this: [externalities](https://en.wikipedia.org/wiki/Externality). It refers to the costs or benefits experienced by people who did not choose to incur them. 
+There's a standard term in economics for idea: [externalities](https://en.wikipedia.org/wiki/Externality). An externality is a cost or benefit experienced by people who did not choose to incur those costs or benefits. A classic example of a negative externality would be secondhand smoke: when someone else makes the choice to smoke for their own purposes, it changes the immediate environment in a way that can harm me. It was not the smoker's intent to harm me - they only sought to meet their own needs - but it occurred nonetheless.
 
 There are two basic approaches we can take to address externalities:
 
