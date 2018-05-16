@@ -160,7 +160,7 @@ Now, having pushed out MVS's rules to their logical conclusions, I've seen where
 
 There are six essential issues that lead me to this conclusion. We'll explore each of them, and more, over the course of this series:
 
-- MVS has almost all the failure modes of a dep-style system, and more. Failures manifest as false positives. The only failure mode MVS lacks is pathological SAT solving; a later post will cover approaches to mitigating realistic SAT risks.
+- MVS has almost all the failure modes of a dep-style system, and some additional ones. Failures manifest as false positives. The only failure mode MVS lacks is pathological SAT solving; a later post will cover approaches to mitigating realistic SAT risks.
 - When incompatibilities with new versions of your dependencies arise, MVS affords you only extreme options:
   - Refactor - optimal if you can do it, but may be prohibitively difficult, at least in the short term.
   - Lobby for change - maybe it works, maybe it doesn't; if it does, it's usually because the "incompatibility" was actually a bug.
