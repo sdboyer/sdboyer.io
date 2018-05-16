@@ -158,7 +158,7 @@ But, in avoiding SAT, MVS also cuts out some of the complexities that I believe 
 
 Now, having pushed out MVS's rules to their logical conclusions, I've seen where much of the displaced complexity lands - and I believe that the cure is worse than the disease. That is, MVS will cause more harm than arises from the NP-complete problems Russ designed it to circumvent.
 
-There are eight essential issues that lead me to this conclusion. We'll explore each of them, and more, over the course of this series:
+There are six essential issues that lead me to this conclusion. We'll explore each of them, and more, over the course of this series:
 
 - MVS has almost all the failure modes of a dep-style system, and more. Failures manifest as false positives. The only failure mode MVS lacks is pathological SAT solving; a later post will cover approaches to mitigating realistic SAT risks.
 - When incompatibilities with new versions of your dependencies arise, MVS affords you only extreme options:
