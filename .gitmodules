@@ -6,4 +6,7 @@
 	url = https://github.com/zhe/hugo-theme-slim
 [submodule "themes/kiera"]
 	path = themes/kiera
-	url = https://github.com/avianto/hugo-kiera.git
+    url = https://github.com/avianto/hugo-kiera.git
+[submodule "themes/temple"]
+	path = themes/temple
+    url = https://github.com/aos/temple
