@@ -70,20 +70,20 @@ Let's also assume that `A` contains at least one non-`main` package, and that so
 
 Now, let's imagine that there's some kind of incompatibility between `C@v0.9.0` and `C@v1.0.0`:
 
-![fail-incompat](https://www.dropbox.com/s/qer48jsq0yebv63/fail-incompat.png?raw=1)
+![fail-incompat](/vgo/fail-incompat.png)
 
 The nature of this incompatibility is very important: is it an API change, or just behavior? Is it allowing new behaviors, or changing or restricting old ones? That gets into the nature of compatibility, though, which is the topic of the next post. Right now, we're just establishing basic mechanics, so all that matters is that this incompatibility exists (at least, from `A`'s perspective).
 
 Still, I've chosen to represent the incompatibility gap as existing between `C@v0.9.0` and `C@v1.0.0`, because incompatibilities in the v0 range are expected, so it helps keep my mind from twitching. (Behavior in the v0 range is also crucial; we'll return to it at the end of this post.)
 
 At this point, Aparna could easily encounter a problem - she runs `vgo get -u`, and receives `C@v1.0.0`:
-![fail-up-broke](https://www.dropbox.com/s/q40p418v7zsxsvm/fail-up-broke.png?raw=1)
+![fail-up-broke](/vgo/fail-up-broke.png)
 
 Now, the problem here might be subtle, and it's perfectly plausible that Aparna might not notice it. (Whether or not she notices, though, tells us nothing about the significance of the problem. If obviousness was correlated with severity, software would have no security holes.)
 
 But, let's assume she does notice. This is an ephemeral failure - Aparna can easily roll it back with a `vgo get C@v0.9.0`:
 
-![fail-ephfix-down](https://www.dropbox.com/s/ixq545z4lfutxk3/fail-ephfix-down.png?raw=1)
+![fail-ephfix-down](/vgo/fail-ephfix-down.png)
 
 At this point, Aparna has solved the problem for herself. But, having discovered this incompatibility, the expectation under MVS is that Aparna will do one of the following:
 
@@ -139,11 +139,11 @@ Let's walk the example forward to see the effects of these strategies in practic
 
 Imagine we have another module, `B`, which requires `C@v1.0.0`, across the incompatibility gap:
 
-![fail-base](https://www.dropbox.com/s/0ndet6910025d5g/fail-base.png?raw=1)
+![fail-base](/vgo/fail-base.png)
 
 Let's also imagine that a fourth module, `D`, into which Deon is trying to incorporate both `A` and `B`. This creates a classic diamond dependency on `C`. Under MVS' build list algorithm (Algorithm 1 in [the blog posts](https://research.swtch.com/vgo-mvs)), the `require` declarations are minimums, so `D`'s build will end up with `C@v1.0.0`:
 
-![fail-diamond](https://www.dropbox.com/s/k2ldew1o6dshsy1/fail-diamond.png?raw=1)
+![fail-diamond](/vgo/fail-diamond.png)
 
 Now, if `A@v1.0.0` truly can't work with `C@v1.0.0`, and `B@v1.0.0` truly does require `C@v1.0.0`, then there's simply no resolution here - this build will never work. What the tool can tell Deon about that reality, however, depends on the strategy that Aparna chose.
 
@@ -157,7 +157,7 @@ _Aside: what we know about [loss aversion](https://en.wikipedia.org/wiki/Loss_av
 
 Things change a bit when additional releases of either `A` or `B  `are in play. If there are multiple versions of `B`, and one `require`s  `C@v0.9.0`:
 
-![fail-get-twob](https://www.dropbox.com/s/y0mmpqpmdkqjx93/fail-get-twob.png?raw=1)
+![fail-get-twob](/vgo/fail-get-twob.png)
 
 With this set of possibilities, it's now possible to find a working build combining both `A` and `B ` - we just need `B@v0.9.0`, instead of `B@v1.0.0`. This is a straightforward jump to make, and if Aparna Declared under gps, then Deon's `dep ensure -add B` would select the workable solution: `A@v1.0.0`, `B@v0.9.0`, `C@v0.9.0`.
 
@@ -165,11 +165,11 @@ vgo's behavior would be the same, though - pick `B@v1.0.0`, emit a warning, and 
 
 If there are more versions of `A`, the current iteration of gps can make some bad choices. Let's say that Aparna issued a new release, `A@v1.0.1`, in which she Declared incompatibility with `C@v1.0.0`:
 
-![fail-twoa-incompat](https://www.dropbox.com/s/bex8pghbg1ch66y/fail-twoa-incompat.png?raw=1)
+![fail-twoa-incompat](/vgo/fail-twoa-incompat.png)
 
 Aparna has put her knowledge of this incompatibility out there, which is great. But when Deon tries to pull in `B`:
 
-![fail-get-twoa](https://www.dropbox.com/s/t4reii93quuhzx2/fail-get-twoa.png?raw=1)
+![fail-get-twoa](/vgo/fail-get-twoa.png)
 
 It's the same as the previous situation. There's no way this build can work, but Deon doesn't know that. And dep, as it is implemented today, would unfortunately make a bad decision: it would see that `A@v1.0.1` can't work with `C@v1.0.0`, but that `A@v1.0.0` has no such restriction, and allow selection of the latter. This would provide Deon with the broken combination `A@v1.0.0`, `B@v1.0.0`, and `C@v1.0.0` - a regression to vgo-esque false positives.
 
@@ -181,7 +181,7 @@ Either way, we know this safe-to-update assumption will inevitably fail. When it
 
 That both systems have this problem with ambiguity between "is compatible" and "compatibility unknown" indicates that this is an essential domain problem, not some incidental artifact of SAT. As such, dealing with it is a central design goal of gps2. I currently intend for the basic mechanism to be look something like this: when Aparna publishes `A@v1.0.1` and Declares an incompatibility with `C@v1.0.0`, that incompatibility is projected _back in time_ to previous versions of `A`:
 
-![fail-twoa-backintime](https://www.dropbox.com/s/npgpblpc7fp9it4/fail-twoa-backintime.png?raw=1)
+![fail-twoa-backintime](/vgo/fail-twoa-backintime.png)
 
 There are costs to this, and it has to work in concert with other mechanisms to be properly effective. But it's simple and intuitive, and squarely addresses the aforementioned problem of overly-aggressive solver search. And, by attaching it to releases instead of a standalone service, we can maintain a useful invariant about new constraint informatino only appearing at the _end_ of the timeline.
 
@@ -191,7 +191,7 @@ It also mirrors an incontrovertible reality: future changes to the ecosystem can
 
 Let's backtrack a bit in our examples to when Deon first entered the story, so that we can explore an alternate path:
 
-![fail-diamond](https://www.dropbox.com/s/k2ldew1o6dshsy1/fail-diamond.png?raw=1)
+![fail-diamond](/vgo/fail-diamond.png)
 
 On the first pass through, we assumed that the requirement from `B@v1.0.0` was true. But what if it isn't? That is, what if `B@v1.0.0` actually _is_ compatible with `C@v0.9.0`, and its `require` declaration points to a newer version than it truly needs?
 
@@ -199,7 +199,7 @@ The next section will explore why this is quite plausible. For now, though, let'
 
 If Deon notices all this, then he's in a bind. He can fix the problem for himself via a `replace "C" v1.0.0 => "C" v0.9.0`. But, if he then makes a new release:
 
-![fail-replace-pub](https://www.dropbox.com/s/6shoomxbl2imuw2/fail-replace-pub.png?raw=1)
+![fail-replace-pub](/vgo/fail-replace-pub.png)
 
 `D` will get the necessary version of `C`. But the `replace` fix is "local" - vgo only applies it when `D` is the module being built. Thus, `D@v1.0.0` has baked in what I'll refer to as a **contagion failure** - one that will spread to any dependers on `D` (and their dependers, recursively).
 
@@ -216,7 +216,7 @@ Deon has more Bargaining strategies available to him than Aparna did, but they'r
 
 If Deon does choose the easy Replace option available to him and issues a release, his depender, Emiko will not reap the benefit of his research. She will have to repeat both flashes of insight about `B→C` and `A→C`, because MVS will push `A` back onto the incompatible version of `C` until the `replace` declaration is duplicated:
 
-![fail-contagion](https://www.dropbox.com/s/vlh3j7734zo05tg/fail-contagion.png?raw=1)
+![fail-contagion](/vgo/fail-contagion.png)
 
 We'll refer to the act of copy/pasting `exclude` and/or `replace` declarations from `D` into `E` as **hoisting**. 
 
@@ -235,7 +235,7 @@ This is a general pattern, one almost entirely skirted by the vgo writings: prob
 
 It's important to contrast contagion failure modes with the shape of the cases that are more commonly discussed in writings about vgo. Those cases tend to present the reader as the author of `A`:
 
-![fail-fixable-contagion](https://www.dropbox.com/s/cn2sg5zb6zsgdbu/fail-fixable-contagion.png?raw=1)
+![fail-fixable-contagion](/vgo/fail-fixable-contagion.png)
 
 Let's refer to this case as a **half diamond**.
 
@@ -243,7 +243,7 @@ Because it's our own module that's relying on the pre-breakage version of `C`, t
 
 Half diamonds are nicer, but there's no reason to believe that they would be the norm in the wild. Things could well go in the other direction, with multiple intermediate modules:
 
-![fail-deepdiamond](https://www.dropbox.com/s/2tylnizpl0ltn7j/fail-deepdiamond.png?raw=1)
+![fail-deepdiamond](/vgo/fail-deepdiamond.png)
 
 We'll call these **deep diamonds**.
 
@@ -278,17 +278,17 @@ If the problem were limited to first time use, then it would be worrisome, but n
 
 Let's extend our running example by adding a few more versions in one of the intermediate modules. Dotted lines represent the `require "C"` declaration in each version's `go.mod`:
 
-![iloss-universe](https://www.dropbox.com/s/14oy37emkosap2t/iloss-universe.png?raw=1)
+![iloss-universe](/vgo/iloss-universe.png)
 
 Let's enhance this a little more by also using gold arrows to mark true minimum. If, for a given module version, the  `require "C"`  declaration also happens to be true minimum, then there will be only a gold arrow:
 
-![iloss-univ-truemins](https://www.dropbox.com/s/0anxzipe7p67zxw/iloss-univ-truemins.png?raw=1)
+![iloss-univ-truemins](/vgo/iloss-univ-truemins.png)
 
 This is saying that all of the module versions have `require "C"` equal to true minimum except `B@v1.0.1`, which has a true minimum of `C@v0.9.0`, but a `require "C" v1.0.0`.
 
 OK, that's the setup. Now, we're going to pretend we're acting as `mymod`, which already uses `A`, and wants to add `B` via `vgo get B`:
 
-![iloss-truemins-contagion](https://www.dropbox.com/s/szd6jqhlbnso0sa/iloss-truemins-contagion.png?raw=1)
+![iloss-truemins-contagion](/vgo/iloss-truemins-contagion.png)
 
 That will give us `B@v1.1.0`, which leads MVS to pick `C@v1.0.0`, thereby breaking `A`. Let's assume this is an API-level breakage, so the type checker catches it immediately when we run `go test`, and tips us off that it's the `A@v1.0.0 → C@v1.0.0` link where the problem lies. There are three possible courses of action we can take ourselves: use a `replace` (and create a contagion failure), fork `A` and `C`, or try downgrading to `C@v0.9.0`.
 
@@ -296,7 +296,7 @@ In the current setup, the downgrade (`vgo get C@v0.9.0`) will succeed by also ro
 
 Now, if we tweak the module version sets so that the same divergence existed in `B@v1.0.0`:
 
-![iloss-univ-truemins2](https://www.dropbox.com/s/fgpb63p9r6g1gut/iloss-univ-truemins2.png?raw=1)
+![iloss-univ-truemins2](/vgo/iloss-univ-truemins2.png)
 
 then MVS will determine that no versions of `B` will work, and `vgo get C@v0.9.0` will fail (either explicitly, or by 'succeeding' with the sentinel version `C@none`, indicating that the formula is unsatisfiable). The only recourse we'd have is to not use `B` at all, or manually search through the versions of `B` with a `replace "C" v1.0.0 => "C" v0.9.0 ` until we find `B@v1.0.0`.
 
@@ -356,7 +356,7 @@ One way of observing the harms arising from information loss is to look at what 
 
 Let's reimagine our ongoing example with an extra intermediate module, `D`, where it's `A` that we're trying to introduce:
 
-![iloss-cascading-rollback](https://www.dropbox.com/s/tebvgp8ni01x0p3/iloss-cascading-rollback.png?raw=1)
+![iloss-cascading-rollback](/vgo/iloss-cascading-rollback.png)
 
 The first fix attempt is still the same - `vgo get C@v0.9.0`. MVS will force `B` to roll back to `B@v1.0.0`, even though it's not actually necessary. That will entail a cascading rollback on `D`, which will be a real failure, because all versions of `D` _actually_ need `B@v1.0.1`, but based on the artificial rollback of `B`. Again, we have to resort to a fix involving `replace`, resulting in contagion failure, but now the blind search may involve versions from both `B` and `D`.
 
@@ -372,7 +372,7 @@ When things are working well, this is somewhere between "nice" and "ok, whatever
 
 The "ok, whatever" bit is how this behaves when looking at the `go.mod` files of dependencies. Let's say that we have this package import graph, where the boxes are modules, the ovals are packages, the arrows represent imports, and `A` is the module we're working on:
 
-![phantom](https://www.dropbox.com/s/9efauki1q0bjk2k/phantom.png?raw=1)
+![phantom](/vgo/phantom.png)
 
 Assuming that `B/go.mod` is complete, it'll have a `require` declaration in it for `C`. However, `B` only imports a package in `C` (the root and only package, also named `C`)  from its subpackage, `B/foo`, which we do _not_ import from `A`. Nevertheless, because the module and import graphs are independent, vgo will incorporate `B`'s `require "C"` declaration, and it will be factored into our build up in `A`.
 
@@ -421,7 +421,7 @@ When forks are used as a band-aid, yet more challenges come into view:
 
 The big kicker with forks, however, is that unlike `replace` or `exclude` declarations, forking can't skip over intermediate dependencies. That means, in a deep diamond scenario, instead of just declaring a `replace "C"`, Frank would have to fork all of `D`, `A`, and `C`:
 
-![fail-fork](https://www.dropbox.com/s/hjcjro4g9ddbkh6/fail-fork.png?raw=1)
+![fail-fork](/vgo/fail-fork.png)
 
 To make matters worse, vgo also allows modules to have circular `require` declarations:
 
@@ -429,7 +429,7 @@ To make matters worse, vgo also allows modules to have circular `require` declar
 
 If there are `require` cycles in any of the forked modules, each cycle will need to be audited independently, and potentially forked:
 
-![fail-loopfork](https://www.dropbox.com/s/ti1hrwva630w63t/fail-loopfork.png?raw=1)
+![fail-loopfork](/vgo/fail-loopfork.png)
 
 These cycles may exist to manage code relocation and/or global state (`D@v1.0.0 <-> D@v2.0.0` is a likely candidate for these), or simply because two separate modules have interwoven logic. For example, there are project-level cycles between Kubernetes and Docker, but no package-level cycles.
 
@@ -488,11 +488,11 @@ In 2018, i imagine it probably qualifies as common knowledge that you're signing
 
 The problem is, the primary risk doesn't actually sit with the person who made the choice, but with their dependers. We've seen this before, but one more time:
 
-![fail-incompat](https://www.dropbox.com/s/qer48jsq0yebv63/fail-incompat.png?raw=1)
+![fail-incompat](/vgo/fail-incompat.png)
 
 The worst that Aparna faces in this configuration is an ephemeral failure, and her easiest move is to Ignore, followed by Declare. Deon is the one who's left with no easy options. Let's imagine he ran a `vgo get A@v1.0.0 Bv1.0.0`, expressly naming the versions he wanted:
 
-![fail-diamond](https://www.dropbox.com/s/k2ldew1o6dshsy1/fail-diamond.png?raw=1)
+![fail-diamond](/vgo/fail-diamond.png)
 
 Now, despite the fact that Deon made an explicit choice to have only versions in v1, he's got a failure because Aparna chose to use `C` in its experimental period.
 
@@ -522,5 +522,6 @@ In the next post, we'll focus in on the idea of compatibility. Turns out, compat
 
 [^1]: True minimum is readily knowable in exactly one situation: when a module references an identifier from another module's package, and that identifier was introduced in the version that is currently selected. Barring that, it's quite difficult to know if we've accurately identified true minimum.
 
-[^2 ]: It's "indirect reciprocity" because Aparna's benefits derive from the environment - a compatible ecosystem - rather than any one single other actor. Module graphs don't fulfill the requirements for [network reciprocity](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3279745/pdf/nihms49939.pdf) because, while cycles are possible in the module graph, in practice it is overwhelmingly directed.
-[^3]: "But I think in practice dependencies will move forward at just the right speed, which ends up being just the right amount slower than Cargo and friends." 'Just the right speed' is necessarily slower than 'everything updated all the time,' which means the ecosystem is in a degraded mode.
+[^2]: It's "indirect reciprocity" because Aparna's benefits derive from the environment - a compatible ecosystem - rather than any one single other actor. Module graphs don't fulfill the requirements for [network reciprocity](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3279745/pdf/nihms49939.pdf) because, while cycles are possible in the module graph, in practice it is overwhelmingly directed.
+
+[^3]: From [the MVS blog post](https://research.swtch.com/vgo-mvs#upgrade-speed): "But I think in practice dependencies will move forward at just the right speed, which ends up being just the right amount slower than Cargo and friends." 'Just the right speed' is necessarily slower than 'everything updated all the time,' which means the ecosystem is in a degraded mode.
