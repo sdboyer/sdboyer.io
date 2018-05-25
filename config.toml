@@ -10,10 +10,11 @@ disqusShortname = "sdboyer-io"
     topmenu = "none"
     GithubID = "sdboyer"
     TwitterID = "sdboyer"
-    FooterMsg = "ohai"
+    hjslangs = ["go", "toml"]
 
 [author]
     name = "sam boyer"
     github = "sdboyer"
     twitter = "sdboyer"
+    email = "org dot samboyer at sam"
 

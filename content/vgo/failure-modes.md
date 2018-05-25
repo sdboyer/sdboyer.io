@@ -512,13 +512,11 @@ As we've seen here, MVS has the very same kind of problem. What it adds, however
 
 In other words: "Welcome to Go! Before you get started, shave this yak."
 
-This is why I find [the observation that the only permanent solution to incompatibility](https://github.com/golang/go/issues/24301#issuecomment-390766926) involves fixing the code to be fundamentally uninteresting. Obviously it's true. And we'll get there, eventually. But we're a community, not a pool of interchangeable workers operated by a distributed scheduler. Thanks, but no thanks.
+This is why I find [the observation that the only permanent solution to incompatibility](https://github.com/golang/go/issues/24301#issuecomment-390766926) involves fixing the code to be fundamentally uninteresting. Obviously it's true. And we'll get there, eventually. But we're a community, not a pool of interchangeable workers operated by a distributed scheduler.
 
 Looking over the hamfisted incentives for developers, harmful externalities, and assorted additional failure modes (which, in his feedback, Russ has generally classified as good, because he thinks labor forcing functions are A-OK), it's hard to see why it's worth giving up the automation that a solver provides us. The argument I've yet to hear from Russ is exactly why allowing SAT will _necessarily_ lead to unmanageable complexity growth. All I see here is yet another dependency manager that is set up to make people scared to update their dependencies - that is, scared to experiment, grow, and learn - because it's optimizing for the wrong thing.
 
-In the next post, we'll focus in on the idea of compatibility. Turns out, compatibility is one of those turtles-all-the-way-down situations.
-
----
+In the next post, we'll focus in on the idea of compatibility. Turns out, it's a turtles-all-the-way-down problem.
 
 [^1]: True minimum is readily knowable in exactly one situation: when a module references an identifier from another module's package, and that identifier was introduced in the version that is currently selected. Barring that, it's quite difficult to know if we've accurately identified true minimum.
 
