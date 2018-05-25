@@ -1,6 +1,6 @@
 +++
 title = "An Analysis of Vgo: Failure Modes"
-date = 2018-05-25T03:12:18-04:00
+date = 2018-05-25T09:12:18-04:00
 keywords = ["golang", "go", "clapback", "dep", "dependency management", "package management"]
 +++
 
@@ -8,7 +8,7 @@ Twenty years ago, Alistair Cockburn [wrote a paper](http://alistair.cockburn.us/
 
 > We have been designing complex systems whose active components are variable and highly non-linear components called people, without characterizing these components or their effect on the system being designed. Upon reflection, this seems absurd, but remarkably few people in our field have devoted serious energy to understanding how these things called people affect software development.
 
-This post is focused on the failure modes of vgo, but in the spirit of Cockburn's sentiment here, it is focused on both mechanical and human failures. That's really the only way one can approach a problem like dependency management.
+This post is focused on the failure modes of vgo, but in the spirit of Cockburn's sentiment here, it is focused on both mechanical and human failures. I believe that's the only way one can approach a problem like dependency management.
 
 I went back and forth over the order in which to release this post and the compatibility post. I settled on putting this one first because I suspected that people would be (understandably!) skeptical about some of the strong statements in the first piece. To that end, this post provides evidence for four of the six main issues:
 
@@ -25,7 +25,7 @@ The drawback to having failure modes precede compatibility is that the latter de
 
 This post relies heavily on basic concepts from game theory. Earlier drafts did not, because I was concerned it might be too off-putting for people, plus my own misgivings about game theory as a methodology. But, without a framework for more precisely expressing the problems induced by MVS, the concerns came off as fuzzy - unsurprising, given the complexity of the problem at hand. And the truth is, dependency management is almost a dream problem for game theory, particularly [evolutionary game theory](https://en.wikipedia.org/wiki/Evolutionary_game_theory): most relevant actions are part of an immutable public record, decision points can be readily identified, causality can be traced, identity is stable, and costs are easily identified.
 
-That said, this post is not a formal game theoretic argument. (If there are any academics out there who'd like to collaborate on that, please [reach out]()!). For example, I've omitted reference to payoffs - a necessary part of a proper model, but tricky in part because the motivation for participation in FLOSS is, at the very least, the subject of some debate.
+That said, this post is not a formal game theoretic argument. (If there are any academics out there who'd like to collaborate on that, please [reach out](https://twitter.com/sdboyer)!). For example, I've omitted reference to payoffs - a necessary part of a proper model, but tricky in part because the motivation for participation in FLOSS is, at the very least, the subject of some debate.
 
 I've approached it this way because I'm not trying to construct a formal proof, so much as help to tease out what has been a rather handwavy discussion about the social implications of vgo's technical failure modes. To that end, I've focused on identifying key decision points that people can make when interacting with the ecosystem of dependencies, primarily under MVS, but also under dep/gps, and the hypothetical gps2 when relevant. At each of these points, I identify a set of choices - "strategies" - that the people have available to them. By distilling these into clear, separate choices, faced by individual people at specific times, it helps us resist the temptation to handwave over complex, multi-step human processes.
 
@@ -37,11 +37,11 @@ This is essential, because it gives us the tools to systematically approach and 
 
 The meaning of an import path should remain the same. And the tool and algorithmic design certainly enforces this. But the social mechanism design is essentially absent; it is basically just, "break on every state that is not the desirable final state, and that pain will drive humans to fix it." 
 
-The problem is exemplified [by this statement (under Upgrade Speed)]((https://research.swtch.com/vgo-mvs#upgrade-speed)):
+The problem is exemplified [by this statement (under Upgrade Speed)](https://research.swtch.com/vgo-mvs#upgrade-speed):
 
 > But I think in practice dependencies will move forward at just the right speed, which ends up being just the right amount slower than Cargo and friends.
 
-I can't tell if this is an intentional or accidental invocation of the [Goldilocks principle](https://en.wikipedia.org/wiki/Goldilocks_principle). Either way, I have no idea what "just right" actually means. All I can extract from it is a tautology: "I think MVS is right, therefore the upgrade speed under MVS is the right upgrade speed." Now, maybe there is a Goldilocks zone for dependency management, and maybe MVS would hit it. But because it's humans collaborating to do the work, if it does, it'll be because it creates a stable, habitable ecosystem for those humans. To that end, through an exploration of both the technical and social failure modes, this piece aims to show that MVS, by construction, will run afoul of [this basic truth](https://theconversation.com/new-take-on-game-theory-offers-clues-on-why-we-cooperate-38130) from evolutionary game theory: 
+I can't tell if this is an intentional or accidental invocation of the [Goldilocks principle](https://en.wikipedia.org/wiki/Goldilocks_principle). Either way, I have no idea what "just right" actually means. All I can extract from it is a tautology: "I think MVS is right, therefore the upgrade speed under MVS is the right upgrade speed." Now, maybe there is a Goldilocks zone for dependency management, and maybe MVS would hit it. But because it's humans collaborating to do the work, if it does, it'll be because it creates a stable, habitable ecosystem for those humans. To that end, through an exploration of both the technical and social failure modes, this piece aims to show that MVS, as a result of its intentional design choices, will run afoul of [this basic, rather obvious truth](https://theconversation.com/new-take-on-game-theory-offers-clues-on-why-we-cooperate-38130) from evolutionary game theory:
 
 > The collapse of cooperation occurs when the ratio of costs to benefits becomes too high.
 
@@ -64,7 +64,7 @@ The primary failure mode in vgo, however, is silent false positives - a `vgo {ge
 
 Let's look at examples to see how that works, starting with modules `A` and `C`:
 
-![fail-two-init](https://www.dropbox.com/s/8215fi647p0twy5/fail-two-init.png?raw=1)
+![fail-two-init](/vgo/fail-two-init.png)
 
 Let's also assume that `A` contains at least one non-`main` package, and that some other module might depend on it. This does not necessarily mean it's public/OSS - it could be private, but within an organization that maintains multiple modules spread across multiple teams.
 
@@ -99,7 +99,7 @@ Let's refer to these strategies as **Refactor**, **Bargain**, and **Ignore**, re
 | Bargain  | Moderate to prohibitive (depending on complexity of the change, and Carla's agreeableness to it) | Compatibility continuity is restored                         | Compatibility may be broken for anything already relying on `C@v1.0.0` | No         |
 | Ignore   | Zero                                                         | None                                                         | Any depender on `A` that updates `C`, whether by `vgo get -u` or adding `B`,  would silently get `C@v1.0.0`, a known-bad combination | Yes        |
 
-Refactor and Bargain will have manageable labor costs sometimes, but there's no guarantee. Other times, they could represent months of work. Ignore is free for Aparna, but lays a land mine for others.
+Refactor and Bargain will have manageable labor costs sometimes, but there's no guarantee. Other times, they could represent months of work (Also, they're both instances of [yak shaving](https://en.wiktionary.org/wiki/yak_shaving), except the larger goal isn't necessarily Aparna's). Ignore is free for Aparna, but lays a land mine for others.
 
 Ideally, Aparna would have a middle ground strategy here - a way of declaring the existence of this incompatibility that she has discovered, so that anything depending on A won't be surprised by it if they attempt to update `C`. Furthermore, it'd be ideal if that strategy had a low, predictable labor cost, and if the positive externalities consistently outweighed the negative ones.
 
@@ -122,7 +122,9 @@ Under dep/gps, Aparna could play Declare by creating a version constraint. This 
 
 Of course, this approach also excludes a vast swathe of potential versions. In other words, it's predicting the future - something that humans are usually bad at. This is an area where dep would really benefit from reducing its expressiveness - a goal for gps2.
 
-vgo does not allow such declarations, as respecting them would entail that MVS cross Schaefer's dichotomy into an NP-hard search. However, while discussing an earlier draft of this post, Russ agreed that a service to track incompatibility declarations would be beneficial for vgo. Aparna could then Declare the incompatibility to that service (exact mechanism TBD). MVS itself would not know or care that such a declaration exists, but the logic in  `vgo get`  surrounding MVS would. If MVS were ever to select  `A@v1.0.0` and `C@v1.0.0` together, vgo would be able to warn the user about it.
+vgo does not allow such declarations, as respecting them would entail that MVS cross Schaefer's dichotomy into an NP-hard search. However, while discussing an earlier draft of this post, Russ agreed that a service to track incompatibility declarations would be beneficial for vgo. In the interest of being as fair as possible to vgo and MVS, I'm going to pretend like its general behavior part of the specification already.
+
+With such a service, Aparna could then Declare the incompatibility (exact mechanism TBD). MVS itself would not know or care that such a declaration exists, but the logic in  `vgo get`  surrounding MVS would. If MVS were ever to select  `A@v1.0.0` and `C@v1.0.0` together, vgo would be able to warn the user about it.
 
 Let's bring this back in line with the other strategies by adding to our table:
 
@@ -139,7 +141,7 @@ Imagine we have another module, `B`, which requires `C@v1.0.0`, across the incom
 
 ![fail-base](https://www.dropbox.com/s/0ndet6910025d5g/fail-base.png?raw=1)
 
-Let's also imagine that a fourth module, `D`, into which Deon is trying to incorporate both `A` and `B`. This creates a classic diamond dependency on `C`. Under MVS' build list algorithm (Algorithm 1 in [the blog posts]()), the `require` declarations are minimums, so `D`'s build will end up with `C@v1.0.0`:
+Let's also imagine that a fourth module, `D`, into which Deon is trying to incorporate both `A` and `B`. This creates a classic diamond dependency on `C`. Under MVS' build list algorithm (Algorithm 1 in [the blog posts](https://research.swtch.com/vgo-mvs)), the `require` declarations are minimums, so `D`'s build will end up with `C@v1.0.0`:
 
 ![fail-diamond](https://www.dropbox.com/s/k2ldew1o6dshsy1/fail-diamond.png?raw=1)
 
@@ -181,7 +183,9 @@ That both systems have this problem with ambiguity between "is compatible" and "
 
 ![fail-twoa-backintime](https://www.dropbox.com/s/npgpblpc7fp9it4/fail-twoa-backintime.png?raw=1)
 
-There are costs to this, and it has to work in concert with other mechanisms to be properly effective. But it's simple and intuitive, and squarely addresses the aforementioned problem of overly-aggressive solver search. It also mirrors an incontrovertible reality: future changes to the ecosystem can affect the compatibility properties of pre-existing releases. If we can find a targeted way of allowing future knowledge to improve on our current decisions, while still retaining the spirit of immutable releases and avoiding new negative externalities, it's a major win.
+There are costs to this, and it has to work in concert with other mechanisms to be properly effective. But it's simple and intuitive, and squarely addresses the aforementioned problem of overly-aggressive solver search. And, by attaching it to releases instead of a standalone service, we can maintain a useful invariant about new constraint informatino only appearing at the _end_ of the timeline.
+
+It also mirrors an incontrovertible reality: future changes to the ecosystem can affect the compatibility properties of pre-existing releases. If we can find a targeted way of allowing future knowledge to improve on our current decisions, while still retaining the spirit of immutable releases and avoiding new negative externalities, it's a major win.
 
 ### Contagion Failure
 
@@ -244,8 +248,6 @@ Half diamonds are nicer, but there's no reason to believe that they would be the
 We'll call these **deep diamonds**.
 
 Deon wouldn't notice the problem between `A` and `C` when he first runs `vgo get A`, because there's nothing forcing  `C` forward to `v1.0.0`. It's only when `F` connects the diamond that the incompatibility becomes a problem in a real build. But Frank is two degrees removed from the details of the `A → C` relationship. As such, he's the _least_ likely to have knowledge about how to approach the problem - but he's the one saddled with addressing it.
-
-It's interesting to note that the main operating principle of MVS is to have maintainers proactively update and adapt to changes in their dependencies, but the path of least resistance is just to ignore them, which has terrible effects for others. This is the same shape of problem as setting overly constrictive constraints (again, [the Kubernetes YAML strawman example]()) in the way dep currently allows, but gps2 largely would not. ["Authority without responsibility," as David Anderson put it](https://groups.google.com/d/msg/golang-nuts/jFPz5yZCPcQ/ToB5CpzSBAAJ) on the mailing list - but as a criticism of dep and the like, in response to the initial vgo announcement. That's just another way of describing externalities.
 
 ## Minimum Versions and Information Loss
 
@@ -317,7 +319,7 @@ At first glance, riding the top seems like it should be the generally recommende
 
 > Upgrading all modules is perhaps the most common modification made to build lists. It is what `go get -u` does today.
 
-And riding the top is what [maintainers should probably be doing](https://github.com/golang/proposal/blob/master/design/24301-versioned-go.md#ecosystem-fragmentation), as it's how they would discover if there are some incompatibilities that MVS expects them to address through refactoring. However, as [Aparna's strategy table]() indicates, Refactor is either the first or second most costly strategy available. Now, she may be deriving some benefit from fulfilling a sense of duty to the community, but if she's reflexively performing Refactor, it's unlikely to be furthering any of her own goals for `A`. "Always Refactor" is thus, in game theoretic terms, a [purely](https://en.wikipedia.org/wiki/Strategy_(game_theory)#Pure_and_mixed_strategies) [altruistic strategy](https://en.wikipedia.org/wiki/Evolutionary_game_theory#Routes_to_altruism). (Bear with me now - we're gonna go a little deeper on the game theory.)
+And riding the top is what [maintainers should probably be doing](https://github.com/golang/proposal/blob/master/design/24301-versioned-go.md#ecosystem-fragmentation), as it's how they would discover if there are some incompatibilities that MVS expects them to address through refactoring. However, as [Aparna's strategy table](#the-mechanics-of-failure) indicates, Refactor is either the first or second most costly strategy available. Now, she may be deriving some benefit from fulfilling a sense of duty to the community, but if she's reflexively performing Refactor, it's unlikely to be furthering any of her own goals for `A`. "Always Refactor" is thus, in game theoretic terms, a [purely](https://en.wikipedia.org/wiki/Strategy_(game_theory)#Pure_and_mixed_strategies) [altruistic strategy](https://en.wikipedia.org/wiki/Evolutionary_game_theory#Routes_to_altruism). (Bear with me now - we're gonna go a little deeper on the game theory.)
 
 Evolutionary game theory holds that for systems built on [altruistic strategies of indirect reciprocity](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3279745/pdf/nihms49939.pdf) to find stability - that is, for all players to stick with an altruistic strategy - then there needs to be some kind of reputational scoring system for tracking peoples' adherence to altruism.[^2]
 
@@ -421,7 +423,7 @@ The big kicker with forks, however, is that unlike `replace` or `exclude` declar
 
 ![fail-fork](https://www.dropbox.com/s/hjcjro4g9ddbkh6/fail-fork.png?raw=1)
 
-To make matters worse, vgo also [allows modules to have circular `require` declarations]():
+To make matters worse, vgo also allows modules to have circular `require` declarations:
 
 > Declaring this kind of cycle can be important when singleton functionality moves from one module to another. Our algorithms must not assume the module requirement graph is acyclic.
 
@@ -502,9 +504,17 @@ Of course, semantic import versioning is supposed to address all that - and if i
 
 
 
-## Wrap-up
+## "Welcome to Go! Here's Your Yak"
 
-Looking over the assorted additional failure modes, poorly constructed incentives for users, nasty externalities, and the structural factors that would prevent MVS from reaching at least some even meeting its own stated goals, it's hard to see why it's worth giving up the automation that a solver provides us. The argument I've been waiting to hear from Russ is exactly why allowing SAT will _necessarily_ lead to unmaageable complexity growth. All I can see is yet another dependency manager that's going to make people scared to update their dependencies, because it's optimizing for the wrong thing.
+When Russ first announced vgo, one of the early replies on the mailing list came from David Anderson [He noted](https://groups.google.com/d/msg/golang-nuts/jFPz5yZCPcQ/ToB5CpzSBAAJ) that a problem with the global constraint declarations in systems like dep or glide is how they effectively provided "authority without responsibility." Russ has echoed this sentiment in various ways, such as [the strawman Kubernetes YAML example](https://github.com/golang/proposal/blob/master/design/24301-versioned-go.md#build-control) that I referenced in the first post.
+
+As we've seen here, MVS has the very same kind of problem. What it adds, however, is the reverse structure: "responsibility without authority."  That's the bit where, when the compatibility state of the ecosystem is in a degraded mode - and that is "ALWAYS," according to game theory, the adage that [complex systems run in degraded mode](https://blog.acolyer.org/2016/02/10/how-complex-systems-fail/), and Russ' own statements[^3] - it's your job to work to fix other peoples' problems, where "problem" is often "they didn't do enough work to keep up with everyone else."
+
+In other words: "Welcome to Go! Before you get started, shave this yak."
+
+This is why I find [the observation that the only permanent solution to incompatibility](https://github.com/golang/go/issues/24301#issuecomment-390766926) involves fixing the code to be fundamentally uninteresting. Obviously it's true. And we'll get there, eventually. But we're a community, not a pool of interchangeable workers operated by a distributed scheduler. Thanks, but no thanks.
+
+Looking over the assorted additional failure modes, poorly constructed incentives for users, nasty harmful externalities, and the structural factors that would largely prevent it from even meeting its own stated goals, it's hard to see why it's worth giving up the automation that a solver provides us. The argument I've yet to hear from Russ is exactly why allowing SAT will _necessarily_ lead to unmanageable complexity growth. All I see here is yet another dependency manager that is set up to make people scared to update their dependencies - that is, scared to experiment, grow, and learn - because it's optimizing for the wrong thing.
 
 In the next post, we'll focus in on the idea of compatibility. Turns out, compatibility is one of those turtles-all-the-way-down situations.
 
@@ -512,4 +522,5 @@ In the next post, we'll focus in on the idea of compatibility. Turns out, compat
 
 [^1]: True minimum is readily knowable in exactly one situation: when a module references an identifier from another module's package, and that identifier was introduced in the version that is currently selected. Barring that, it's quite difficult to know if we've accurately identified true minimum.
 
-[^2 ]: It's "indirect reciprocity" because Aparna's benefits derive from the environment - a compatible ecosystem - rather than any one single other actor. Module graphs don't fulfill the requirements for [network reciprocity]() because, while cycles are possible in the module graph, in practice it is overwhelmingly directed.
+[^2 ]: It's "indirect reciprocity" because Aparna's benefits derive from the environment - a compatible ecosystem - rather than any one single other actor. Module graphs don't fulfill the requirements for [network reciprocity](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3279745/pdf/nihms49939.pdf) because, while cycles are possible in the module graph, in practice it is overwhelmingly directed.
+[^3]: "But I think in practice dependencies will move forward at just the right speed, which ends up being just the right amount slower than Cargo and friends." 'Just the right speed' is necessarily slower than 'everything updated all the time,' which means the ecosystem is in a degraded mode.
