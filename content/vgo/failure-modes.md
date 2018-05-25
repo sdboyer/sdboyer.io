@@ -1,25 +1,21 @@
 +++
-title = "An Analysis of Vgo: Failure Modes"
+title = "Failure Modes"
 date = 2018-05-25T09:12:18-04:00
 keywords = ["golang", "go", "clapback", "dep", "dependency management", "package management"]
 +++
 
-Twenty years ago, Alistair Cockburn [wrote a paper](http://alistair.cockburn.us/Characterizing+people+as+non-linear,+first-order+components+in+software+development) about the role of humans in software development. He started with a lovely thought:
+Twenty years ago, Alistair Cockburn [wrote a piece](http://alistair.cockburn.us/Characterizing+people+as+non-linear,+first-order+components+in+software+development) about the role of humans in software development. He started with a lovely thought:
 
 > We have been designing complex systems whose active components are variable and highly non-linear components called people, without characterizing these components or their effect on the system being designed. Upon reflection, this seems absurd, but remarkably few people in our field have devoted serious energy to understanding how these things called people affect software development.
 
 This post is focused on the failure modes of vgo, but in the spirit of Cockburn's sentiment here, it is focused on both mechanical and human failures. I believe that's the only way one can approach a problem like dependency management.
 
-I went back and forth over the order in which to release this post and the compatibility post. I settled on putting this one first because I suspected that people would be (understandably!) skeptical about some of the strong statements in the first piece. To that end, this post provides evidence for four of the six main issues:
+I went back and forth over the order in which to release this post and the compatibility post. I settled on putting this one first because I suspected that people would be (understandably!) skeptical about some of the strong statements in the first piece. To that end, this post provides evidence for four of the six [main issues](/vgo/intro#mvs-a-category-error). Paraphrasing the originals:
 
-> - MVS has almost all the failure modes of a dep-style system, and more. Failures manifest as false positives. The only failure mode MVS lacks is pathological SAT solving; a later post will cover approaches to mitigating realistic SAT risks.
-> - When incompatibilities with new versions of your dependencies arise, MVS affords you only extreme options:
->   - Refactor - optimal if you can do it, but may be prohibitively difficult, at least in the short term.
->   - Lobby for change - maybe it works, maybe it doesn't; if it does, it's usually because the "incompatibility" was actually a bug.
->   - Fork - this is a nuclear option, and always will be; it carries maintenance burdens for you and creates difficult-to-trace duplication within the module ecosystem, along with other, less obvious costs.
->   - Ignore it - works fine for you, but creates a time bomb for others. By MVS' rules, it's antisocial community behavior.
-> - By blindly assuming compatibility, even in the experimental v0 range, MVS creates a hostile environment for experimentation. We should expect that will lead to v1 releases being rolled before authors are truly comfortable with their promises, which will not only undermine the commonly-held meaning of v1, but exacerbate the aforementioned problems with mandated SIV.
-> - The semantics of `require` compact minimum version with current version together, almost necessarily resulting in the loss of crucial information about what the "true minimum" for a given dependency may be. The loss of this information ultimately renders vgo unsuitable as an intermediate layer on which community tooling might improve.
+- MVS has all the same failure modes, plus more, minus pathological SAT.
+- MVS only allows extreme remediation strategies on conflicts.
+- MVS is hostile to experimentation.
+- MVS loses crucial information, which makes it an unsuitable intermediate layer, and causes problems of its own.
 
 The drawback to having failure modes precede compatibility is that the latter deals with _why_ we should expect incompatibilities to occur, even after v1, even with semantic import versioning, and even with cooperative participants. However, because I suspect most people accept that as a no-brainer, it was preferable to defer addressing that issue for this one.
 
@@ -37,11 +33,11 @@ This is essential, because it gives us the tools to systematically approach and 
 
 The meaning of an import path should remain the same. And the tool and algorithmic design certainly enforces this. But the social mechanism design is essentially absent; it is basically just, "break on every state that is not the desirable final state, and that pain will drive humans to fix it." 
 
-The problem is exemplified [by this statement (under Upgrade Speed)](https://research.swtch.com/vgo-mvs#upgrade-speed):
+The problem is exemplified by [this statement (under Upgrade Speed)](https://research.swtch.com/vgo-mvs#upgrade-speed):
 
 > But I think in practice dependencies will move forward at just the right speed, which ends up being just the right amount slower than Cargo and friends.
 
-I can't tell if this is an intentional or accidental invocation of the [Goldilocks principle](https://en.wikipedia.org/wiki/Goldilocks_principle). Either way, I have no idea what "just right" actually means. All I can extract from it is a tautology: "I think MVS is right, therefore the upgrade speed under MVS is the right upgrade speed." Now, maybe there is a Goldilocks zone for dependency management, and maybe MVS would hit it. But because it's humans collaborating to do the work, if it does, it'll be because it creates a stable, habitable ecosystem for those humans. To that end, through an exploration of both the technical and social failure modes, this piece aims to show that MVS, as a result of its intentional design choices, will run afoul of [this basic, rather obvious truth](https://theconversation.com/new-take-on-game-theory-offers-clues-on-why-we-cooperate-38130) from evolutionary game theory:
+I can't tell if this is an intentional or accidental invocation of the [Goldilocks principle](https://en.wikipedia.org/wiki/Goldilocks_principle). Either way, I have no idea what "just right" actually means. All I can extract from it is a tautology: "I think MVS is right, therefore the upgrade speed under MVS is the right upgrade speed." Now, maybe there is a Goldilocks zone for dependency management, and maybe MVS would hit it. But because it's humans collaborating to do the work, if it does, it'll be because it creates a stable, habitable ecosystem for those humans. Through an exploration of both the technical and social failure modes, this piece aims to show that MVS, as a result of its intentional design choices, will run afoul of [this basic, obvious truth](https://theconversation.com/new-take-on-game-theory-offers-clues-on-why-we-cooperate-38130) from evolutionary game theory:
 
 > The collapse of cooperation occurs when the ratio of costs to benefits becomes too high.
 
@@ -99,7 +95,7 @@ Let's refer to these strategies as **Refactor**, **Bargain**, and **Ignore**, re
 | Bargain  | Moderate to prohibitive (depending on complexity of the change, and Carla's agreeableness to it) | Compatibility continuity is restored                         | Compatibility may be broken for anything already relying on `C@v1.0.0` | No         |
 | Ignore   | Zero                                                         | None                                                         | Any depender on `A` that updates `C`, whether by `vgo get -u` or adding `B`,  would silently get `C@v1.0.0`, a known-bad combination | Yes        |
 
-Refactor and Bargain will have manageable labor costs sometimes, but there's no guarantee. Other times, they could represent months of work (Also, they're both instances of [yak shaving](https://en.wiktionary.org/wiki/yak_shaving), except the larger goal isn't necessarily Aparna's). Ignore is free for Aparna, but lays a land mine for others.
+Ignore is free for Aparna, but lays a land mine for others. Refactor and Bargain will have manageable labor costs sometimes, but there's no guarantee. Other times, they could represent months of work.
 
 Ideally, Aparna would have a middle ground strategy here - a way of declaring the existence of this incompatibility that she has discovered, so that anything depending on A won't be surprised by it if they attempt to update `C`. Furthermore, it'd be ideal if that strategy had a low, predictable labor cost, and if the positive externalities consistently outweighed the negative ones.
 
@@ -124,7 +120,7 @@ Of course, this approach also excludes a vast swathe of potential versions. In o
 
 vgo does not allow such declarations, as respecting them would entail that MVS cross Schaefer's dichotomy into an NP-hard search. However, while discussing an earlier draft of this post, Russ agreed that a service to track incompatibility declarations would be beneficial for vgo. In the interest of being as fair as possible to vgo and MVS, I'm going to pretend like its general behavior part of the specification already.
 
-With such a service, Aparna could then Declare the incompatibility (exact mechanism TBD). MVS itself would not know or care that such a declaration exists, but the logic in  `vgo get`  surrounding MVS would. If MVS were ever to select  `A@v1.0.0` and `C@v1.0.0` together, vgo would be able to warn the user about it.
+With such a service, Aparna could then Declare the incompatibility. MVS itself would not know or care that such a declaration exists, but the logic in  `vgo get`  surrounding MVS would. If MVS were ever to select  `A@v1.0.0` and `C@v1.0.0` together, vgo would be able to warn the user about it.
 
 Let's bring this back in line with the other strategies by adding to our table:
 
@@ -153,7 +149,7 @@ Now, if `A@v1.0.0` truly can't work with `C@v1.0.0`, and `B@v1.0.0` truly does r
 * If Aparna Declared under gps, then Deon's `dep ensure -add B` would result in a failure with a conflict message indicating the problem. This is a frustrating outcome, but it's also optimal: the tool immediately carried Deon to the inevitable conclusion. (Declaring in this way would also require a new release of `A`.)
 * If Aparna Declared under MVS, then Deon's `vgo get B` will exit successfully, but show a warning about the `A→C` combination. Deon could then take manual action, eventually coming to the conclusion that he has to abandon `B` entirely. (As the mechanism for an incompatibility service is TBD, it's not clear whether a new release of `A` would be required.)
 
-_Aside: what we know about [loss aversion](https://en.wikipedia.org/wiki/Loss_aversion) suggests that it would be considerably more infuriating to have the command complete successfully, only to discover later that `B`  cannot be incorporated at all, than to simply have it rejected up front._
+(Aside: what we know about [loss aversion](https://en.wikipedia.org/wiki/Loss_aversion) suggests that it would be considerably more infuriating to have the command complete successfully, only to discover later that `B`  cannot be incorporated at all, than to simply have it rejected up front.)
 
 Things change a bit when additional releases of either `A` or `B  `are in play. If there are multiple versions of `B`, and one `require`s  `C@v0.9.0`:
 
@@ -212,7 +208,7 @@ Let's look at Deon's strategy table for this decision:
 | Replace           | Trivial                                                      | The new, improved version of `D`  can ship to the world | Contagion failure                                            | Yes        |
 | Give up           | Zero                                                         | None                                                    | The world doesn't get Deon's new, planned feature            | Yes        |
 
-Deon has more Bargaining strategies available to him than Aparna did, but they're also necessarily more work, as one of them involves negotiating with both Bjorn and Carla. Crucially absent is the unilateral Refactor strategy - Deon cannot fix this entirely on his own.
+Deon has more Bargaining strategies available to him than Aparna did, but they're also necessarily more work, as one of them involves negotiating with both Bjorn and Carla. Crucially absent is the unilateral Refactor strategy - Deon cannot fix this entirely on his own. It's also worth noting that his Bargain strategies qualify as [yak shaving](https://en.wiktionary.org/wiki/yak_shaving), although it's someone else's yak.
 
 If Deon does choose the easy Replace option available to him and issues a release, his depender, Emiko will not reap the benefit of his research. She will have to repeat both flashes of insight about `B→C` and `A→C`, because MVS will push `A` back onto the incompatible version of `C` until the `replace` declaration is duplicated:
 
