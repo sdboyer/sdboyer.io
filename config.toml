@@ -1,7 +1,7 @@
 baseURL = "https://sdboyer.io/"
 languageCode = "en-us"
 title = "sdboyer.io"
-theme = "slim"
+theme = "temple"
 googleAnalytics = "UA-100002759-1"
 disqusShortname = "sdboyer-io"
 
@@ -14,3 +14,6 @@ disqusShortname = "sdboyer-io"
 
 [author]
     name = "sam boyer"
+    github = "sdboyer"
+    twitter = "sdboyer"
+

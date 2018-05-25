@@ -1,5 +1,6 @@
 +++
 title = "An Analysis of vgo"
+date = "2018-05-14T08:12:18-04:00"
 keywords = ["golang", "go", "clapback", "dep", "dependency management", "package management"]
 +++
 
