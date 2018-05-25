@@ -1,5 +1,6 @@
 +++
 title = "Failure Modes"
+linkTitle = "Failure Modes"
 date = 2018-05-25T09:12:18-04:00
 keywords = ["golang", "go", "clapback", "dep", "dependency management", "package management"]
 +++
@@ -25,19 +26,21 @@ That said, this post is not a formal game theoretic argument. (If there are any 
 
 I've approached it this way because I'm not trying to construct a formal proof, so much as help to tease out what has been a rather handwavy discussion about the social implications of vgo's technical failure modes. To that end, I've focused on identifying key decision points that people can make when interacting with the ecosystem of dependencies, primarily under MVS, but also under dep/gps, and the hypothetical gps2 when relevant. At each of these points, I identify a set of choices - "strategies" - that the people have available to them. By distilling these into clear, separate choices, faced by individual people at specific times, it helps us resist the temptation to handwave over complex, multi-step human processes.
 
-This is essential, because it gives us the tools to systematically approach and analyze the wishful thinking that pervades the _social_ mechanism design - or really, lack thereof - in MVS. While the desired [technical outcome is clearly articulated in the official proposal](https://github.com/golang/proposal/blob/master/design/24301-versioned-go.md#semantic-import-versions):
+This is essential, because it gives us the tools to systematically approach and analyze the wishful thinking that pervades the _social_ mechanism design - or really, lack thereof - in MVS.
+
+That is, we have a desired technical outcome [that's clearly articulated](https://github.com/golang/proposal/blob/master/design/24301-versioned-go.md#semantic-import-versions):
 
 > > An explicit goal for Go from the beginning was to be able to build Go code using only the information found in the source itself, not needing to write a makefile or one of the many modern replacements for makefiles. If Go needed a configuration file to explain how to build your program, then Go would have failed.
 >
 > It is an explicit goal of this proposal's design to preserve this property, to avoid making the general semantics of a Go source file change depending on the contents of `go.mod`.
 
-The meaning of an import path should remain the same. And the tool and algorithmic design certainly enforces this. But the social mechanism design is essentially absent; it is basically just, "break on every state that is not the desirable final state, and that pain will drive humans to fix it." 
+So, the meaning of an import path should remain the same. And the tool and algorithmic design certainly enforces this. But the social mechanism design is essentially absent; it is basically just, "break on every state that is not the desirable final state, and that pain will drive humans to fix it."
 
 The problem is exemplified by [this statement (under Upgrade Speed)](https://research.swtch.com/vgo-mvs#upgrade-speed):
 
 > But I think in practice dependencies will move forward at just the right speed, which ends up being just the right amount slower than Cargo and friends.
 
-I can't tell if this is an intentional or accidental invocation of the [Goldilocks principle](https://en.wikipedia.org/wiki/Goldilocks_principle). Either way, I have no idea what "just right" actually means. All I can extract from it is a tautology: "I think MVS is right, therefore the upgrade speed under MVS is the right upgrade speed." Now, maybe there is a Goldilocks zone for dependency management, and maybe MVS would hit it. But because it's humans collaborating to do the work, if it does, it'll be because it creates a stable, habitable ecosystem for those humans. Through an exploration of both the technical and social failure modes, this piece aims to show that MVS, as a result of its intentional design choices, will run afoul of [this basic, obvious truth](https://theconversation.com/new-take-on-game-theory-offers-clues-on-why-we-cooperate-38130) from evolutionary game theory:
+I can't tell if this is an intentional or accidental invocation of the [Goldilocks principle](https://en.wikipedia.org/wiki/Goldilocks_principle). Either way, I have no idea what "just right" actually means. All I can extract from it is a tautology: "I think MVS is right, therefore the upgrade speed under MVS is the right upgrade speed." Now, maybe there is a Goldilocks zone for dependency management, and maybe MVS would hit it. But if it does, because it's humans collaborating to do the work, it'll be because it creates a stable, habitable ecosystem for those humans. This piece tries to get a better grip on the technical and social aspects as a deeply coupled unit, and in so doing, show why we should expect that MVS will run afoul of [this basic, obvious truth](https://theconversation.com/new-take-on-game-theory-offers-clues-on-why-we-cooperate-38130) from evolutionary game theory:
 
 > The collapse of cooperation occurs when the ratio of costs to benefits becomes too high.
 

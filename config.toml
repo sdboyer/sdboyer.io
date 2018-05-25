@@ -18,3 +18,5 @@ disqusShortname = "sdboyer-io"
     twitter = "sdboyer"
     email = "org dot samboyer at sam"
 
+[taxonomies]
+    series = "vgo"
