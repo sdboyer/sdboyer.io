@@ -4,13 +4,14 @@ title = "sdboyer.io"
 theme = "temple"
 googleAnalytics = "UA-100002759-1"
 disqusShortname = "sdboyer-io"
+pygmentsStyle = "github"
+pygmentsCodeFences = true
+pygmentsUseClasses = true
 
 [params]
-    highlight = "github"
     topmenu = "none"
     GithubID = "sdboyer"
     TwitterID = "sdboyer"
-    hjslangs = ["go", "toml"]
 
 [author]
     name = "sam boyer"
