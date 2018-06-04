@@ -147,12 +147,12 @@ Let's also imagine that a fourth module, `D`, into which Deon is trying to incor
 Now, if `A@v1.0.0` truly can't work with `C@v1.0.0`, and `B@v1.0.0` truly does require `C@v1.0.0`, then there's simply no resolution here - this build will never work. What the tool can tell Deon about that reality, however, depends on the strategy that Aparna chose.
 
 * If Aparna Ignored (or if she didn't notice herself - these are indistinguishable to Deon), then neither MVS nor gps could have informed Deon that this depgraph is unworkable. He has to notice for himself. That's likely more difficult for him than her; as the author of `A`, she almost certainly knows the `A→C` boundary much better than he does.
-* If Aparna Bargained, it is effectively equivalent to Ignore until some unknown time in the future when the negotiation ends and a new release of `C` is made.
+* If Aparna Bargained, it's equivalent to Ignore until some unknown future time, when Carla rolls a new release of `C`, assuming she accepts the change.
 * If Aparna Refactored, then the immediate problem goes away, though it does require a new release of `A`.
 * If Aparna Declared under gps, then Deon's `dep ensure -add B` would result in a failure with a conflict message indicating the problem. This is a frustrating outcome, but it's also optimal: the tool immediately carried Deon to the inevitable conclusion. (Declaring in this way would also require a new release of `A`.)
 * If Aparna Declared under MVS, then Deon's `vgo get B` will exit successfully, but show a warning about the `A→C` combination. Deon could then take manual action, eventually coming to the conclusion that he has to abandon `B` entirely. (As the mechanism for an incompatibility service is TBD, it's not clear whether a new release of `A` would be required.)
 
-(Aside: what we know about [loss aversion](https://en.wikipedia.org/wiki/Loss_aversion) suggests that it would be considerably more infuriating to have the command complete successfully, only to discover later that `B`  cannot be incorporated at all, than to simply have it rejected up front.)
+*(Aside: what we know about [loss aversion](https://en.wikipedia.org/wiki/Loss_aversion) suggests that it would be considerably more infuriating to have the command complete successfully, only to discover later that `B`  cannot be incorporated at all, than to simply have it rejected up front.)*
 
 Things change a bit when additional releases of either `A` or `B  `are in play. If there are multiple versions of `B`, and one `require`s  `C@v0.9.0`:
 
