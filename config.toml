@@ -10,7 +10,7 @@ disqusShortname = "sdboyer-io"
     GithubID = "sdboyer"
     TwitterID = "sdboyer"
     highlight = true
-    hjslangs = ["go", "toml"]
+    hjslangs = ["go"]
 
 [author]
     name = "sam boyer"
